@@ -33,4 +33,12 @@ _bibtexStr = """
   year = {2020},
   doi = {10.1093/nar/gkaa379}
 }
+
+@article{Nilsson2023,
+  title = {Accurate prediction of HLA class II antigen presentation across all loci using tailored data acquisition and refined machine learning},
+  author = {Nilsson, Jonas B. and Kaabinejadian, Saghar and Yari, Hooman and Kester, Michael G. and van Balen, Peter and Hildebrand, William H. and Nielsen, Morten},
+  journal = {Science Advances},
+  year = {2023},
+  doi = {10.1126/sciadv.adj6367}
+}
 """

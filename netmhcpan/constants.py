@@ -23,8 +23,18 @@
 # *
 # **************************************************************************
 
-# Common constants
-DEFAULT_VERSION = '4.2'
+# Merged 2026-07-28 (was two separate plugins, scipion-chem-netmhcpan and
+# scipion-chem-netmhciipan): both wrap DTU Health Tech academic-license
+# tools with an identical installation shape (manual download, edit the
+# NMHOME line in the wrapper script, point *_HOME at it in scipion.conf) --
+# there was no technical reason to keep them as separate plugins, only two
+# separate protocol classes for two biologically distinct antigen
+# presentation pathways (MHC-I cytotoxic vs MHC-II T-helper). See
+# ProtNetMHCpanPromiscuity/ProtNetMHCIIpanPromiscuity docstrings for why
+# they stay as two protocols, not one with an EnumParam.
+
+NETMHCPAN_VERSION = '4.2'
+NETMHCIIPAN_VERSION = '4.3'
 
 # NetMHCpan-4.2 is academic-use only software (DTU Health Tech), not
 # redistributable: it is never installed automatically. The user downloads
@@ -33,50 +43,83 @@ DEFAULT_VERSION = '4.2'
 # NETMHCPAN_HOME to that folder in scipion.conf.
 NETMHCPAN_DIC = {
     'name': 'NetMHCpan',
-    'version': DEFAULT_VERSION,
+    'version': NETMHCPAN_VERSION,
     'home': 'NETMHCPAN_HOME',
     'binary': 'NETMHCPAN_BINARY_NAME',
 }
 
-DEFAULT_BINARY_NAME = 'netMHCpan'
+DEFAULT_NETMHCPAN_BINARY_NAME = 'netMHCpan'
+
+# NetMHCIIpan-4.3 is academic-use only software (DTU Health Tech), not
+# redistributable: it is never installed automatically. The user downloads
+# it manually, edits the NMHOME line inside the netMHCIIpan wrapper script
+# (a manual step required by DTU's own install instructions) and points
+# NETMHCIIPAN_HOME to that folder in scipion.conf.
+NETMHCIIPAN_DIC = {
+    'name': 'NetMHCIIpan',
+    'version': NETMHCIIPAN_VERSION,
+    'home': 'NETMHCIIPAN_HOME',
+    'binary': 'NETMHCIIPAN_BINARY_NAME',
+}
+
+DEFAULT_NETMHCIIPAN_BINARY_NAME = 'netMHCIIpan'
 
 READ_URL = 'https://github.com/Lvera-code/scipion-chem-netmhcpan'
-DOWNLOAD_URL = 'https://services.healthtech.dtu.dk/services/NetMHCpan-4.2/'
+NETMHCPAN_DOWNLOAD_URL = 'https://services.healthtech.dtu.dk/services/NetMHCpan-4.2/'
+NETMHCIIPAN_DOWNLOAD_URL = 'https://services.healthtech.dtu.dk/services/NetMHCIIpan-4.3/'
 
-NOINSTALL_WARNING = (
+NETMHCPAN_NOINSTALL_WARNING = (
     'Installation could not be completed because the local NetMHCpan-4.2 '
     'installation has not been found. Due to academic license restrictions, '
     f'DTU Health Tech does not allow redistributing this package: download it '
-    f'manually from {DOWNLOAD_URL} (requires an academic account), edit the '
-    'NMHOME line inside the netMHCpan wrapper script with the absolute '
-    'installation path (a manual step required by DTU\'s own install '
-    'instructions), and set NETMHCPAN_HOME in scipion.conf. Please check the '
-    f'scipion-chem-netmhcpan README file for more details: {READ_URL}'
+    f'manually from {NETMHCPAN_DOWNLOAD_URL} (requires an academic account), '
+    'edit the NMHOME line inside the netMHCpan wrapper script with the '
+    'absolute installation path (a manual step required by DTU\'s own '
+    'install instructions), and set NETMHCPAN_HOME in scipion.conf. Please '
+    f'check the scipion-chem-netmhcpan README file for more details: {READ_URL}'
+)
+
+NETMHCIIPAN_NOINSTALL_WARNING = (
+    'Installation could not be completed because the local NetMHCIIpan-4.3 '
+    'installation has not been found. Due to academic license restrictions, '
+    f'DTU Health Tech does not allow redistributing this package: download it '
+    f'manually from {NETMHCIIPAN_DOWNLOAD_URL} (requires an academic account), '
+    'edit the NMHOME line inside the netMHCIIpan wrapper script with the '
+    'absolute installation path (a manual step required by DTU\'s own '
+    'install instructions), and set NETMHCIIPAN_HOME in scipion.conf. Please '
+    f'check the scipion-chem-netmhcpan README file for more details: {READ_URL}'
 )
 
 # Minimum footprint of an MHC-I binding peptide: below 8 aa there is no
 # viable binding core for any known HLA-I allele. Kept as a hard floor, not
 # a user parameter, since it reflects a binding-biology constraint rather
 # than a tunable setting.
-MIN_PEPTIDE_LENGTH = 8
+MIN_PEPTIDE_LENGTH_MHCI = 8
 
-# Maximum safe length for the exact-peptide mode ('-p'): the NetMHCpan-4.2
-# binary (Linux_x86_64) crashes with a buffer overflow (SIGABRT) for longer
-# inputs -- verified empirically against the reference panel below: 55 aa
-# OK, 57 aa crash (same buffer/architecture as NetMHCIIpan-4.3, whose limit
-# falls in the same range; not a coincidence copied without checking, both
-# share the same binary architecture). Longer sequences are routed to
-# protein mode (sliding window over PEPTIDE_LENGTHS) instead. A
-# conservative safety margin (40, well below the discovered 55/57 aa
-# boundary) is kept as a hard limit, not a user parameter, since it
-# reflects a binary safety constraint rather than a tunable setting.
+# Minimum footprint of the MHC-II binding core: NetMHCIIpan discards (or
+# scores over a shorter, degraded core) peptides shorter than this. Kept as
+# a hard floor, not a user parameter, since it reflects a binding-biology
+# constraint rather than a tunable setting.
+MIN_PEPTIDE_LENGTH_MHCII = 9
+
+# Maximum safe length for the exact-peptide mode ('-p'): both the
+# NetMHCpan-4.2 and NetMHCIIpan-4.3 binaries (Linux_x86_64) crash with a
+# buffer overflow (SIGABRT) for longer inputs -- verified empirically
+# against the reference panel: 55 aa OK, 57 aa crash for NetMHCpan (same
+# buffer/architecture as NetMHCIIpan, whose limit falls in the same range;
+# not a coincidence copied without checking, both share the same binary
+# architecture). Longer sequences are routed to protein mode (sliding
+# window) instead. A conservative safety margin (40, well below the
+# discovered 55/57 aa boundary) is kept as a hard limit, not a user
+# parameter, since it reflects a binary safety constraint rather than a
+# tunable setting.
 MAX_PEPTIDE_MODE_LENGTH = 40
 
-# Candidate binding-core lengths used for protein mode's internal sliding
-# window ('-l' flag). MHC-I binding cores are canonically 8-11 aa (unlike
-# NetMHCIIpan's fixed 15 aa window over a flexible 9 aa core), so this must
-# be passed explicitly -- NetMHCpan does not infer it the way NetMHCIIpan's
-# protein mode does.
+# Candidate binding-core lengths used for NetMHCpan protein mode's internal
+# sliding window ('-l' flag). MHC-I binding cores are canonically 8-11 aa
+# (unlike NetMHCIIpan's fixed 15 aa window over a flexible 9 aa core), so
+# this must be passed explicitly -- NetMHCpan does not infer it the way
+# NetMHCIIpan's protein mode does.
 PEPTIDE_LENGTHS = '8,9,10,11'
 
 # Reference panel of 23 HLA-A/B/C alleles used to estimate broad population
@@ -106,4 +149,18 @@ NETMHCPAN_REFERENCE_PANEL = (
     'HLA-B07:02,HLA-B08:01,HLA-B27:05,HLA-B39:01,HLA-B40:01,HLA-B58:01,HLA-B15:01,'
     'HLA-C01:02,HLA-C03:04,HLA-C04:01,HLA-C05:01,HLA-C06:02,HLA-C07:01,'
     'HLA-C07:02,HLA-C08:02,HLA-C12:03,HLA-C15:02,HLA-C16:01'
+)
+
+# IEDB reference panel of the 27 most representative HLA-DR/DQ/DP alleles,
+# used to estimate broad population coverage when designing T-helper (MHC-II)
+# epitopes. Never insert spaces between commas: NetMHCIIpan passes this
+# string as-is to its '-a' allele parser, and a stray space breaks parsing
+# of the following allele.
+IEDB_REFERENCE_PANEL = (
+    "DRB1_0101,DRB1_0301,DRB1_0401,DRB1_0405,DRB1_0701,DRB1_0802,DRB1_0901,"
+    "DRB1_1101,DRB1_1201,DRB1_1302,DRB1_1501,DRB3_0101,DRB3_0202,DRB4_0101,DRB5_0101,"
+    "HLA-DQA10501-DQB10201,HLA-DQA10501-DQB10301,HLA-DQA10301-DQB10302,"
+    "HLA-DQA10401-DQB10402,HLA-DQA10101-DQB10501,HLA-DQA10102-DQB10602,"
+    "HLA-DPA10201-DPB10101,HLA-DPA10103-DPB10201,HLA-DPA10103-DPB10401,"
+    "HLA-DPA10301-DPB10402,HLA-DPA10201-DPB10501,HLA-DPA10201-DPB11401"
 )

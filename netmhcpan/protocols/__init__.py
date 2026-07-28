@@ -23,3 +23,4 @@
 # **************************************************************************
 
 from .protocol_netmhcpan import ProtNetMHCpanPromiscuity
+from .protocol_netmhciipan import ProtNetMHCIIpanPromiscuity

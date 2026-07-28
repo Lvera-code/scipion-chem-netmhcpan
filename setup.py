@@ -19,13 +19,13 @@ with open('requirements.txt') as f:
 
 setup(
     name='scipion-chem-netmhcpan',
-    version='0.1.0',
-    description='Scipion framework plugin for MHC-I cytotoxic T-cell promiscuity prediction with NetMHCpan-4.2',
+    version='0.2.0',
+    description='Scipion framework plugin for MHC-I/MHC-II promiscuity prediction with NetMHCpan-4.2 and NetMHCIIpan-4.3',
     long_description=long_description,
     url='https://github.com/Lvera-code/scipion-chem-netmhcpan',
     author='Enzo Sierra',
     author_email='enzogael57@gmail.com',
-    keywords='scipion epitope mhc netmhcpan cytotoxic t-cell',
+    keywords='scipion epitope mhc netmhcpan netmhciipan cytotoxic t-cell t-helper',
     packages=find_packages(),
     install_requires=[requirements],
     include_package_data=True,
