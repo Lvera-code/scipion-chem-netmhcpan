@@ -112,8 +112,6 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
         gGroup.addParam('minPromiscuousAlleles', params.IntParam, label='Min. promiscuous alleles: ', default=3,
                          help='Minimum number of panel alleles that must classify as binders to report '
                               'a peptide as a valid candidate.')
-        gGroup.addParam('timeoutSeconds', params.IntParam, label='Timeout (s): ', default=600,
-                         expertLevel=params.LEVEL_ADVANCED)
 
     def _insertAllSteps(self):
         self._insertFunctionStep(self.netmhcpanStep)

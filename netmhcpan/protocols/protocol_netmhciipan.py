@@ -104,8 +104,6 @@ class ProtNetMHCIIpanPromiscuity(EMProtocol):
                          help='Minimum number of panel alleles (in normal orientation, see the utils '
                               'module docstring) that must classify as binders to report a peptide as '
                               'a valid candidate.')
-        gGroup.addParam('timeoutSeconds', params.IntParam, label='Timeout (s): ', default=600,
-                         expertLevel=params.LEVEL_ADVANCED)
 
     def _insertAllSteps(self):
         self._insertFunctionStep(self.netmhciipanStep)
