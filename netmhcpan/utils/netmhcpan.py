@@ -36,6 +36,30 @@ class NetMHCpanParseError(Exception):
     """The NetMHCpan output .xls does not match the expected format."""
 
 
+def _to_float_matrix(df: pd.DataFrame, xls_path: str) -> np.ndarray:
+    """Coerce a block of NetMHCpan .xls numeric columns to float64.
+
+    Same real bug as ``netmhciipan._to_float_matrix`` (NetMHCpan's own
+    scripts format these numbers with awk, which is locale-sensitive): on a
+    machine where LC_NUMERIC uses ',' as the decimal separator (e.g. es_ES),
+    the .xls output ends up with values like '0,301' instead of '0.301',
+    and pandas silently leaves the whole column as strings instead of
+    floats -- confirmed real 2026-07-31 (Blanca hit this running the real
+    test on her own machine: ``TypeError: '<=' not supported between
+    instances of 'str' and 'float'`` in the ``is_binder`` comparison below).
+    """
+    cleaned = df.apply(lambda col: col.astype(str).str.replace(",", ".", regex=False) if col.dtype == object else col)
+    numeric = cleaned.apply(pd.to_numeric, errors="coerce")
+    bad = numeric.isna() & df.notna()
+    if bad.to_numpy().any():
+        bad_values = sorted(set(df.to_numpy()[bad.to_numpy()].tolist()))[:5]
+        raise NetMHCpanParseError(
+            f"Could not parse numeric values in '{xls_path}': {bad_values}. Expected '.' or ',' as the "
+            "decimal separator."
+        )
+    return numeric.to_numpy()
+
+
 def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_alleles: int) -> pd.DataFrame:
     """Parse a NetMHCpan-4.2 .xls output file and score the promiscuity of each peptide.
 
@@ -63,7 +87,7 @@ def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_a
             f"Columns found: {list(raw.columns)}."
         )
 
-    rank_matrix = raw[rank_cols].to_numpy()
+    rank_matrix = _to_float_matrix(raw[rank_cols], xls_path)
     core_matrix = raw[core_cols].to_numpy()
     row_idx = np.arange(len(raw))
 
