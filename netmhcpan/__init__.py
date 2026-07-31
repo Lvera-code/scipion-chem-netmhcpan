@@ -35,11 +35,13 @@ merged into a single EnumParam.
 
 import os
 
+from scipion.install.funcs import InstallHelper
+
 from pwchem import Plugin as pwchemPlugin
 
 from .constants import (
     DEFAULT_NETMHCIIPAN_BINARY_NAME, DEFAULT_NETMHCPAN_BINARY_NAME, NETMHCIIPAN_DIC,
-    NETMHCIIPAN_NOINSTALL_WARNING, NETMHCPAN_DIC, NETMHCPAN_NOINSTALL_WARNING,
+    NETMHCIIPAN_NOINSTALL_WARNING, NETMHCPAN_DIC, NETMHCPAN_NOINSTALL_WARNING, TCSH_DIC,
 )
 
 _references = ['Reynisson2020', 'Nilsson2023']
@@ -59,14 +61,36 @@ class Plugin(pwchemPlugin):
         cls._defineVar(NETMHCPAN_DIC['binary'], DEFAULT_NETMHCPAN_BINARY_NAME)
         cls._defineVar(NETMHCIIPAN_DIC['home'], '')
         cls._defineVar(NETMHCIIPAN_DIC['binary'], DEFAULT_NETMHCIIPAN_BINARY_NAME)
+        cls._defineEmVar(TCSH_DIC['home'], cls.getEnvName(TCSH_DIC))
+        cls._defineVar(TCSH_DIC['activation'], cls.getEnvActivationCommand(TCSH_DIC))
 
     @classmethod
     def defineBinaries(cls, env):
-        """No-op: neither NetMHCpan-4.2 nor NetMHCIIpan-4.3 is ever
-        installed automatically (academic license, not redistributable).
-        See ``validateNetMHCpanInstallation``/
-        ``validateNetMHCIIpanInstallation``."""
-        pass
+        """Still a no-op for NetMHCpan-4.2/NetMHCIIpan-4.3 THEMSELVES
+        (academic license, not redistributable) -- see
+        ``validateNetMHCpanInstallation``/``validateNetMHCIIpanInstallation``.
+
+        DOES install a small conda env with ``tcsh`` (real bug found
+        2026-07-31: both tools' wrapper scripts are '#!/bin/tcsh -f'
+        scripts, and tcsh is not guaranteed to exist system-wide -- see
+        ``TCSH_DIC``'s docstring in constants.py). tcsh itself carries no
+        license restriction, unlike the DTU binaries.
+        """
+        installer = InstallHelper(TCSH_DIC['name'], packageHome=cls.getVar(TCSH_DIC['home']),
+                                  packageVersion=TCSH_DIC['version'])
+        installer.getCondaEnvCommand(
+            binaryName=TCSH_DIC['name'], binaryVersion=TCSH_DIC['version'],
+            extraCommands=['conda install -y -c conda-forge tcsh'],
+            targetName='NETMHC_TCSH_INSTALLED',
+        ).addPackage(env, dependencies=['conda'])
+
+    @classmethod
+    def getTcshRunPrefix(cls):
+        """'{activation} && tcsh' -- prefix protocols use to invoke the
+        NetMHCpan/NetMHCIIpan wrapper scripts explicitly through tcsh
+        (rather than relying on their own shebang, see TCSH_DIC's
+        docstring for why that distinction matters)."""
+        return f'{cls.getVar(TCSH_DIC["activation"])} && tcsh'
 
     @classmethod
     def validateInstallation(cls):

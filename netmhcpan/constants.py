@@ -64,6 +64,28 @@ NETMHCIIPAN_DIC = {
 
 DEFAULT_NETMHCIIPAN_BINARY_NAME = 'netMHCIIpan'
 
+# Both wrapper scripts ('netMHCpan'/'netMHCIIpan', the ones NETMHCPAN_HOME/
+# NETMHCIIPAN_HOME point at) are '#!/bin/tcsh -f' scripts, not Python/bash --
+# a real bug Blanca hit 2026-07-31: on a machine without tcsh installed
+# system-wide, running them fails outright. tcsh itself (unlike the DTU
+# binaries) is NOT license-restricted, so -- unlike NETMHCPAN_DIC/
+# NETMHCIIPAN_DIC's binaries -- it IS safe to auto-install via conda.
+# Shared by both tools (same generic dependency, no reason for two envs).
+# The protocols invoke the wrapper scripts as 'tcsh <script> <args>'
+# explicitly (see ProtNetMHCpanPromiscuity/ProtNetMHCIIpanPromiscuity's
+# '_runMode') instead of executing them directly and relying on the
+# shebang: the shebang hardcodes the absolute path '/bin/tcsh', which a
+# conda-installed tcsh (living under the env's own prefix) would NOT
+# satisfy even while the env is active -- only an explicit 'tcsh <script>'
+# invocation actually resolves the interpreter via $PATH, which conda
+# activation DOES affect.
+TCSH_DIC = {
+    'name': 'netmhc-tcsh',
+    'version': '1.0',
+    'home': 'NETMHC_TCSH_HOME',
+    'activation': 'NETMHC_TCSH_ACTIVATION_CMD',
+}
+
 READ_URL = 'https://github.com/Lvera-code/scipion-chem-netmhcpan'
 NETMHCPAN_DOWNLOAD_URL = 'https://services.healthtech.dtu.dk/services/NetMHCpan-4.2/'
 NETMHCIIPAN_DOWNLOAD_URL = 'https://services.healthtech.dtu.dk/services/NetMHCIIpan-4.3/'

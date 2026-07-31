@@ -220,7 +220,13 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
 
     def _runMode(self, binary, allelePanel, nAlleles, modeArgs, xlsPath, modeDesc):
         args = ' '.join(modeArgs) + f' -a {allelePanel} -xls -xlsfile {xlsPath}'
-        self.runJob(binary, args)
+        # Invoked as 'tcsh <script>' (via netmhcpanPlugin's own tcsh conda
+        # env), not by executing the wrapper script directly: its shebang
+        # ('#!/bin/tcsh -f') hardcodes an absolute system path that a
+        # conda-installed tcsh does NOT satisfy even while the env is
+        # active -- see TCSH_DIC's docstring in constants.py. Real bug
+        # Blanca hit 2026-07-31 on a machine without system-wide tcsh.
+        self.runJob(f'{netmhcpanPlugin.getTcshRunPrefix()} {binary}', args)
 
         if not os.path.isfile(xlsPath):
             raise NetMHCpanExecutionError(

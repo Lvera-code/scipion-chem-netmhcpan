@@ -209,7 +209,11 @@ class ProtNetMHCIIpanPromiscuity(EMProtocol):
 
     def _runMode(self, binary, allelePanel, nAlleles, modeArgs, xlsPath, modeDesc):
         args = ' '.join(modeArgs) + f' -a {allelePanel} -xls -xlsfile {xlsPath}'
-        self.runJob(binary, args)
+        # See ProtNetMHCpanPromiscuity._runMode / TCSH_DIC's docstring in
+        # constants.py: invoked as 'tcsh <script>' explicitly, not by
+        # executing the wrapper script directly (its shebang hardcodes an
+        # absolute system tcsh path a conda-installed one doesn't satisfy).
+        self.runJob(f'{netmhciipanPlugin.getTcshRunPrefix()} {binary}', args)
 
         if not os.path.isfile(xlsPath):
             raise NetMHCIIpanExecutionError(
