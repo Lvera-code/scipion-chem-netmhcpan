@@ -149,13 +149,14 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
         longPeptides = [p for p in peptides if len(p) > MAX_PEPTIDE_MODE_LENGTH]
 
         allelePanel = self.allelePanel.get()
-        nAlleles = len([a for a in allelePanel.split(',') if a])
+        alleleNames = [a for a in allelePanel.split(',') if a]
+        nAlleles = len(alleleNames)
         binary = netmhcpanPlugin.getNetMHCpanBinaryPath()
 
         reportFrames = []
         if shortPeptides:
             reportFrames.append(self._runMode(
-                binary, allelePanel, nAlleles,
+                binary, allelePanel, nAlleles, alleleNames,
                 modeArgs=['-p', '-f', self._writePeptideFile(shortPeptides)],
                 xlsPath=self._getExtraPath('peptide_mode_output.xls'),
                 modeDesc='exact peptide mode',
@@ -165,7 +166,7 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
             # candidate binding-core lengths passed explicitly via '-l':
             # MHC-I cores are 8-11 aa, not a single fixed window.
             reportFrames.append(self._runMode(
-                binary, allelePanel, nAlleles,
+                binary, allelePanel, nAlleles, alleleNames,
                 modeArgs=['-f', self._writeFragmentsFasta(longPeptides), '-l', PEPTIDE_LENGTHS],
                 xlsPath=self._getExtraPath('protein_mode_output.xls'),
                 modeDesc='protein mode (sliding window)',
@@ -197,6 +198,7 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
             newRoi = SequenceROI(sequence=parentSeq, seqROI=roiSeq, roiIdx=row.start, roiIdx2=row.end)
             newRoi._core9aa = String(row.core_9aa)
             newRoi._nPromiscuousAlleles = Integer(int(row.n_promiscuous_alleles))
+            newRoi._promiscuousAlleles = String(row.promiscuous_alleles if pd.notna(row.promiscuous_alleles) else '')
             newRoi._nAllelesEvaluated = Integer(int(row.n_alleles_evaluated))
             newRoi._minRankEl = Float(row.min_rank_el)
             outROIs.append(newRoi)
@@ -218,7 +220,7 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
                 fh.write(f'>candidate_{i}\n{seq}\n')
         return fastaPath
 
-    def _runMode(self, binary, allelePanel, nAlleles, modeArgs, xlsPath, modeDesc):
+    def _runMode(self, binary, allelePanel, nAlleles, alleleNames, modeArgs, xlsPath, modeDesc):
         args = ' '.join(modeArgs) + f' -a {allelePanel} -xls -xlsfile {xlsPath}'
         # Invoked as 'tcsh <script>' (via netmhcpanPlugin's own tcsh conda
         # env), not by executing the wrapper script directly: its shebang
@@ -234,7 +236,7 @@ class ProtNetMHCpanPromiscuity(EMProtocol):
                 f"at '{xlsPath}'. Known causes: an input peptide exceeds the limit of the mode used, or "
                 "the NMHOME line inside the wrapper script points to an outdated path."
             )
-        return parse_xls(xlsPath, nAlleles, self.rankWeak.get(), self.minPromiscuousAlleles.get())
+        return parse_xls(xlsPath, nAlleles, self.rankWeak.get(), self.minPromiscuousAlleles.get(), alleleNames)
 
     # ---------------------------------- Validation -------------------------------
 

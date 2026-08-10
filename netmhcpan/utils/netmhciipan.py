@@ -12,12 +12,13 @@ import numpy as np
 import pandas as pd
 
 _OUTPUT_COLUMNS = [
-    "sequence", "core_9aa", "n_alleles_evaluated", "n_promiscuous_alleles", "min_rank_el", "verdict",
+    "sequence", "core_9aa", "n_alleles_evaluated", "n_promiscuous_alleles", "promiscuous_alleles",
+    "min_rank_el", "verdict",
 ]
 
 _TRACEBACK_COLUMNS = [
     "sequence_f5", "core_9aa", "start", "end", "parent_roi_id",
-    "n_promiscuous_alleles", "n_alleles_evaluated", "min_rank_el",
+    "n_promiscuous_alleles", "promiscuous_alleles", "n_alleles_evaluated", "min_rank_el",
 ]
 
 VALID_CANDIDATE = "Valid candidate"
@@ -49,7 +50,10 @@ def _to_float_matrix(df: pd.DataFrame, xls_path: str) -> np.ndarray:
     return numeric.to_numpy()
 
 
-def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_alleles: int) -> pd.DataFrame:
+def parse_xls(
+    xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_alleles: int,
+    allele_names: List[str],
+) -> pd.DataFrame:
     """Parse a NetMHCIIpan .xls output file and score the promiscuity of each peptide.
 
     Inverted alleles (the ``Inverted`` column) are excluded entirely before
@@ -58,9 +62,19 @@ def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_a
     guarantees ``core_9aa`` is always a literal substring of the input
     peptide.
 
+    Args:
+        allele_names: Panel alleles in the SAME ORDER passed to '-a'
+            (``allele_panel.split(",")``) -- ``rank_cols[i]``/``core_cols[i]``/
+            ``inverted_cols[i]`` correspond to ``allele_names[i]``. Used to
+            name ``promiscuous_alleles`` (needed for real population
+            coverage downstream -- a raw count doesn't distinguish a
+            candidate hitting 3 very rare alleles from one hitting 3
+            globally common ones).
+
     Returns:
         DataFrame with columns ``sequence``, ``core_9aa``,
-        ``n_alleles_evaluated``, ``n_promiscuous_alleles``, ``min_rank_el``
+        ``n_alleles_evaluated``, ``n_promiscuous_alleles``,
+        ``promiscuous_alleles`` (comma-joined allele names), ``min_rank_el``
         and ``verdict`` (``VALID_CANDIDATE`` / ``REJECTED``).
     """
     try:
@@ -95,6 +109,10 @@ def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_a
 
     is_binder_normal = (rank_matrix_normal <= rank_weak)
     n_promiscuous_alleles = is_binder_normal.sum(axis=1)
+    promiscuous_alleles = [
+        ",".join(allele_names[j] for j in range(n_alleles) if is_binder_normal[i, j])
+        for i in range(len(raw))
+    ]
 
     result = pd.DataFrame(
         {
@@ -102,6 +120,7 @@ def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_a
             "core_9aa": best_core,
             "n_alleles_evaluated": n_alleles,
             "n_promiscuous_alleles": n_promiscuous_alleles,
+            "promiscuous_alleles": promiscuous_alleles,
             "min_rank_el": rank_matrix_normal.min(axis=1),
         }
     )
@@ -149,6 +168,7 @@ def build_traceback_report(report_df: pd.DataFrame, parent_records: List[dict]) 
                     "end": end_real,
                     "parent_roi_id": parent["roi_id"],
                     "n_promiscuous_alleles": candidate.n_promiscuous_alleles,
+                    "promiscuous_alleles": candidate.promiscuous_alleles,
                     "n_alleles_evaluated": candidate.n_alleles_evaluated,
                     "min_rank_el": candidate.min_rank_el,
                 }

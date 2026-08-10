@@ -24,3 +24,4 @@
 
 from .protocol_netmhcpan import ProtNetMHCpanPromiscuity
 from .protocol_netmhciipan import ProtNetMHCIIpanPromiscuity
+from .protocol_population_coverage import ProtPopulationCoverage

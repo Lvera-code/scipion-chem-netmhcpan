@@ -20,12 +20,13 @@ import numpy as np
 import pandas as pd
 
 _OUTPUT_COLUMNS = [
-    "sequence", "core_9aa", "n_alleles_evaluated", "n_promiscuous_alleles", "min_rank_el", "verdict",
+    "sequence", "core_9aa", "n_alleles_evaluated", "n_promiscuous_alleles", "promiscuous_alleles",
+    "min_rank_el", "verdict",
 ]
 
 _TRACEBACK_COLUMNS = [
     "sequence_f5", "core_9aa", "start", "end", "parent_roi_id",
-    "n_promiscuous_alleles", "n_alleles_evaluated", "min_rank_el",
+    "n_promiscuous_alleles", "promiscuous_alleles", "n_alleles_evaluated", "min_rank_el",
 ]
 
 VALID_CANDIDATE = "Valid candidate"
@@ -60,16 +61,25 @@ def _to_float_matrix(df: pd.DataFrame, xls_path: str) -> np.ndarray:
     return numeric.to_numpy()
 
 
-def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_alleles: int) -> pd.DataFrame:
+def parse_xls(
+    xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_alleles: int,
+    allele_names: List[str],
+) -> pd.DataFrame:
     """Parse a NetMHCpan-4.2 .xls output file and score the promiscuity of each peptide.
 
     No ``Inverted`` column exists in this format (see module docstring), so
     every allele's ``EL_rank``/``core`` is used directly, unlike
     ``netmhciipan.parse_xls`` which must exclude inverted alleles first.
 
+    Args:
+        allele_names: Panel alleles in the SAME ORDER passed to '-a', used to
+            name ``promiscuous_alleles`` (see ``netmhciipan.parse_xls``
+            docstring, same logic).
+
     Returns:
         DataFrame with columns ``sequence``, ``core_9aa``,
-        ``n_alleles_evaluated``, ``n_promiscuous_alleles``, ``min_rank_el``
+        ``n_alleles_evaluated``, ``n_promiscuous_alleles``,
+        ``promiscuous_alleles`` (comma-joined allele names), ``min_rank_el``
         and ``verdict`` (``VALID_CANDIDATE`` / ``REJECTED``).
     """
     try:
@@ -96,6 +106,10 @@ def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_a
 
     is_binder = rank_matrix <= rank_weak
     n_promiscuous_alleles = is_binder.sum(axis=1)
+    promiscuous_alleles = [
+        ",".join(allele_names[j] for j in range(n_alleles) if is_binder[i, j])
+        for i in range(len(raw))
+    ]
 
     result = pd.DataFrame(
         {
@@ -103,6 +117,7 @@ def parse_xls(xls_path: str, n_alleles: int, rank_weak: float, min_promiscuous_a
             "core_9aa": best_core,
             "n_alleles_evaluated": n_alleles,
             "n_promiscuous_alleles": n_promiscuous_alleles,
+            "promiscuous_alleles": promiscuous_alleles,
             "min_rank_el": rank_matrix.min(axis=1),
         }
     )
@@ -150,6 +165,7 @@ def build_traceback_report(report_df: pd.DataFrame, parent_records: List[dict]) 
                     "end": end_real,
                     "parent_roi_id": parent["roi_id"],
                     "n_promiscuous_alleles": candidate.n_promiscuous_alleles,
+                    "promiscuous_alleles": candidate.promiscuous_alleles,
                     "n_alleles_evaluated": candidate.n_alleles_evaluated,
                     "min_rank_el": candidate.min_rank_el,
                 }
