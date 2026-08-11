@@ -45,9 +45,9 @@ def _to_float_matrix(df: pd.DataFrame, xls_path: str) -> np.ndarray:
     machine where LC_NUMERIC uses ',' as the decimal separator (e.g. es_ES),
     the .xls output ends up with values like '0,301' instead of '0.301',
     and pandas silently leaves the whole column as strings instead of
-    floats -- confirmed real 2026-07-31 (Blanca hit this running the real
-    test on her own machine: ``TypeError: '<=' not supported between
-    instances of 'str' and 'float'`` in the ``is_binder`` comparison below).
+    floats -- confirmed on a machine with that locale configuration:
+    ``TypeError: '<=' not supported between
+    instances of 'str' and 'float'`` in the ``is_binder`` comparison below.
     """
     cleaned = df.apply(lambda col: col.astype(str).str.replace(",", ".", regex=False) if col.dtype == object else col)
     numeric = cleaned.apply(pd.to_numeric, errors="coerce")

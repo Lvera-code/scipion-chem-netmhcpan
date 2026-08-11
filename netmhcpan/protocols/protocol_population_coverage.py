@@ -29,9 +29,9 @@ weighted population coverage estimate, using the same methodology as the
 IEDB Population Coverage tool (Bui et al. 2006, BMC Bioinformatics).
 
 Ported from the standalone B-Cell-Epitope-Prediction repo's
-src/engines/population_coverage.py (Fase 4-bis, Carmen Elena Gomez
-feedback 2026-07-30): 'n_promiscuous_alleles' (ProtNetMHCpanPromiscuity/
-ProtNetMHCIIpanPromiscuity) counts how many reference-panel alleles a
+src/engines/population_coverage.py (Fase 4-bis): 'n_promiscuous_alleles'
+(ProtNetMHCpanPromiscuity/ProtNetMHCIIpanPromiscuity) counts how many
+reference-panel alleles a
 candidate hits SB/WB, treating every allele equally -- but real HLA allele
 frequencies vary enormously: 3 very common alleles is not the same as 3
 rare ones, even though both give the same count. This protocol computes

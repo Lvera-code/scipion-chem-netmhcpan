@@ -3,8 +3,8 @@ NetMHCpan / NetMHCIIpan Scipion plugin
 ================================
 
 Scipion framework plugin wrapping two DTU Health Tech tools for MHC
-promiscuity prediction, merged 2026-07-28 (previously two separate
-plugins, ``scipion-chem-netmhcpan`` and ``scipion-chem-netmhciipan``):
+promiscuity prediction, merged from two previously separate plugins
+(``scipion-chem-netmhcpan`` and ``scipion-chem-netmhciipan``):
 both wrap DTU academic-license tools with an identical installation
 shape (manual download, edit the ``NMHOME`` line in the wrapper script,
 point ``*_HOME`` at it in ``scipion.conf``), so there was no technical

@@ -25,7 +25,7 @@
 This package contains protocols for MHC-I (HLA-A/B/C) cytotoxic T-cell
 promiscuity prediction (local NetMHCpan-4.2) and MHC-II (HLA-DR/DQ/DP)
 T-helper promiscuity prediction (local NetMHCIIpan-4.3). Merged into a
-single plugin 2026-07-28 (previously scipion-chem-netmhcpan and
+single plugin (previously scipion-chem-netmhcpan and
 scipion-chem-netmhciipan): both wrap DTU Health Tech tools with an
 identical installation shape, so there was no technical reason to keep
 them as two plugins -- see ProtNetMHCpanPromiscuity/
@@ -70,8 +70,8 @@ class Plugin(pwchemPlugin):
         (academic license, not redistributable) -- see
         ``validateNetMHCpanInstallation``/``validateNetMHCIIpanInstallation``.
 
-        DOES install a small conda env with ``tcsh`` (real bug found
-        2026-07-31: both tools' wrapper scripts are '#!/bin/tcsh -f'
+        DOES install a small conda env with ``tcsh`` (real bug found:
+        both tools' wrapper scripts are '#!/bin/tcsh -f'
         scripts, and tcsh is not guaranteed to exist system-wide -- see
         ``TCSH_DIC``'s docstring in constants.py). tcsh itself carries no
         license restriction, unlike the DTU binaries.

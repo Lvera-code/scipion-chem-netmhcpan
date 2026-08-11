@@ -23,7 +23,7 @@
 # *
 # **************************************************************************
 
-# Merged 2026-07-28 (was two separate plugins, scipion-chem-netmhcpan and
+# Merged from two separate plugins (scipion-chem-netmhcpan and
 # scipion-chem-netmhciipan): both wrap DTU Health Tech academic-license
 # tools with an identical installation shape (manual download, edit the
 # NMHOME line in the wrapper script, point *_HOME at it in scipion.conf) --
@@ -66,8 +66,8 @@ DEFAULT_NETMHCIIPAN_BINARY_NAME = 'netMHCIIpan'
 
 # Both wrapper scripts ('netMHCpan'/'netMHCIIpan', the ones NETMHCPAN_HOME/
 # NETMHCIIPAN_HOME point at) are '#!/bin/tcsh -f' scripts, not Python/bash --
-# a real bug Blanca hit 2026-07-31: on a machine without tcsh installed
-# system-wide, running them fails outright. tcsh itself (unlike the DTU
+# on a machine without tcsh installed system-wide, running them fails
+# outright. tcsh itself (unlike the DTU
 # binaries) is NOT license-restricted, so -- unlike NETMHCPAN_DIC/
 # NETMHCIIPAN_DIC's binaries -- it IS safe to auto-install via conda.
 # Shared by both tools (same generic dependency, no reason for two envs).
