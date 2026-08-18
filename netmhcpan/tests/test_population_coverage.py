@@ -5,17 +5,14 @@ those 4 candidates hit (HLA-A/B/C, common ones) are present in the bundled world
 reference table, so this is a real, non-trivial computation, not just a smoke test.
 """
 
-from ..protocols import ProtNetMHCpanPromiscuity, ProtPopulationCoverage
+from ..protocols import ProtPopulationCoverage
 from .test_netmhcpan import TestNetMHCpanPromiscuity
 
 
 class TestPopulationCoverage(TestNetMHCpanPromiscuity):
 
     def testPopulationCoverage(self):
-        protNetMHCpan = self.newProtocol(ProtNetMHCpanPromiscuity)
-        protNetMHCpan.inputROIs.set(self.protSeedROIs)
-        protNetMHCpan.inputROIs.setExtended('outputROIs')
-        self.launchProtocol(protNetMHCpan, wait=True)
+        protNetMHCpan = self.runNetMHCpan()
 
         protCoverage = self.newProtocol(ProtPopulationCoverage)
         protCoverage.inputROIs.set(protNetMHCpan)
